@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>专属约会委托单</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#edf5ff;color:#35465e;font-family:"Microsoft YaHei",sans-serif}
+main{max-width:560px;margin:0 auto;padding:24px 18px 40px}
+header{text-align:center;padding:22px 8px}
+.tag{font-size:12px;letter-spacing:3px;color:#789bc9}
+h1{font-size:27px;margin:12px 0}
+.sub{color:#8190a6;font-size:14px;line-height:1.8}
+.card{background:#fff;border:1px solid #dce9fa;border-radius:22px;padding:24px 20px;box-shadow:0 8px 28px #cbdcf233}
+.progress{height:5px;background:#eaf0f8;border-radius:8px;margin-bottom:22px;overflow:hidden}
+#bar{height:100%;width:0;background:#8ab6ee;transition:.25s}
+.small{font-size:12px;color:#8a9bb1}
+h2{font-size:21px;line-height:1.6;margin:12px 0 20px}
+.options{display:grid;gap:11px}
+.option{border:1px solid #dce6f3;background:#fbfdff;border-radius:13px;padding:14px;text-align:left;color:#455a76;font-size:15px;cursor:pointer}
+.option:hover,.option.selected{border-color:#82ace6;background:#edf5ff}
+input,textarea{width:100%;padding:13px;border:1px solid #dce6f3;border-radius:12px;font:inherit;color:#35465e;background:#fbfdff}
+textarea{min-height:100px;resize:vertical}
+.reply{background:#f0f6ff;border-radius:12px;padding:13px;margin-top:17px;line-height:1.8;font-size:14px;color:#5878a4}
+.actions{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
+button.primary,button.secondary{padding:12px 20px;border:0;border-radius:12px;cursor:pointer;font-size:14px}
+.primary{background:#8ab6ee;color:white}
+.secondary{background:#edf1f7;color:#64748b}
+button:disabled{opacity:.4;cursor:not-allowed}
+footer{text-align:center;color:#9aa9bd;font-size:12px;margin-top:22px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="tag">PRIVATE DATE COMMISSION</div>
+<h1>专属约会委托单</h1>
+<div class="sub">请认真填写这份小小的委托。<br>让我提前了解你的喜好与期待。</div>
+</header>
+<section class="card" id="quiz">
+<div class="progress"><div id="bar"></div></div>
+<div class="small" id="count"></div>
+<h2 id="question"></h2>
+<div id="answer" class="options"></div>
+<div id="reply" class="reply hidden"></div>
+<div class="actions">
+<button class="secondary" id="prev" onclick="move(-1)">上一题</button>
+<button class="primary" id="next" onclick="move(1)" disabled>下一题 →</button>
+</div>
+</section>
+<section class="card hidden" id="result">
+<div class="tag">COMMISSION RECEIVED</div>
+<h2>委托已收到。</h2>
+<p id="ending" style="line-height:2"></p>
+<p class="sub">这份反馈是专属的页面演示。当前版本还没有把答卷发送到你的后台。</p>
+<button class="primary" onclick="location.reload()">重新填写</button>
+</section>
+<footer>为特别的相遇，留下一点准备时间。</footer>
+</main>
+<script>
+const questions=[
+{q:"01. 这次委托，希望我怎么称呼你？",type:"text",hint:"填写你喜欢的称呼",reply:"好，我会记住这个称呼。"},
+{q:"02. 约会时，你更喜欢怎样的安排？",opts:["悠闲散步，慢慢聊天","逛展、拍照，留下纪念","一起吃好吃的","惊喜路线，边走边探索"],reply:"了解了，我会把你的偏好放在心上。"},
+{q:"03. 有什么饮食偏好或忌口吗？",type:"text",hint:"例如不吃辣、过敏食物，或特别喜欢的菜",reply:"提前说清楚就好，安排时会优先考虑。"},
+{q:"04. 对服装或情侣装有什么想法？",opts:["想认真搭配一下","同色系就很不错","按角色设定来","舒适自在最重要","暂时没有特别要求"],reply:"收到，服装安排就有方向啦。"},
+{q:"05. 如果准备一份小礼物，你更喜欢？",opts:["手写信或小卡片","角色周边或收藏品","实用的小物","一起拍照留下回忆","不需要礼物，开心就好"],reply:"我知道该往哪个方向准备了。"},
+{q:"06. 关于合照，你更倾向于？",opts:["多拍一些，认真记录","自然抓拍就好","少量几张就够了","先看当天状态"],reply:"拍照这件事，当然以你的舒适度为先。"},
+{q:"07. 有什么特别在意的雷点吗？",type:"text",hint:"可以写下不喜欢的话题、行为或安排",reply:"谢谢你提前告诉我，这些信息很重要。"},
+{q:"08. 对这次委托的预算或其他要求？",type:"text",hint:"可以写预算范围、时间安排或其他补充",reply:"了解，提前沟通会让安排更顺利。"}
+];
+let index=0;
+const answers=Array(questions.length).fill("");
+const el=id=>document.getElementById(id);
+function render(){
+const item=questions[index];
+el("bar").style.width=(index/questions.length*100)+"%";
+el("count").textContent="QUESTION "+String(index+1).padStart(2,"0")+" / "+questions.length;
+el("question").textContent=item.q;
+el("answer").innerHTML="";
+el("reply").classList.add("hidden");
+if(item.opts){
+item.opts.forEach(opt=>{
+const b=document.createElement("button");
+b.className="option"+(answers[index]===opt?" selected":"");
+b.textContent=opt;
+b.onclick=()=>{answers[index]=opt;render();el("reply").textContent=item.reply;el("reply").classList.remove("hidden");el("next").disabled=false};
+el("answer").appendChild(b);
+});
+}else{
+const input=document.createElement(item.hint.includes("雷点")?"textarea":"input");
+input.placeholder=item.hint;
+input.value=answers[index];
+input.oninput=()=>{answers[index]=input.value;el("next").disabled=!input.value.trim()};
+el("answer").appendChild(input);
+el("next").disabled=!answers[index].trim();
+if(answers[index]){el("reply").textContent=item.reply;el("reply").classList.remove("hidden")}
+}
+el("prev").disabled=index===0;
+el("next").textContent=index===questions.length-1?"提交委托 ✓":"下一题 →";
+}
+function move(step){
+if(step<0){index--;render();return}
+if(!answers[index].trim())return;
+if(index<questions.length-1){index++;render();return}
+el("quiz").classList.add("hidden");
+el("result").classList.remove("hidden");
+el("ending").textContent="谢谢你认真完成这份委托。每一条偏好都让这次相遇更有期待。希望我们能一起度过轻松、自在、值得纪念的一天。";
+window.scrollTo({top:0,behavior:"smooth"});
+}
+render();
+</script>
+</body>
+</html>
