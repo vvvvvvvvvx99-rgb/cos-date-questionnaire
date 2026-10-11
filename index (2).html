@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>约会备忘</title>
+<style>
+:root{--ink:#344f6b;--muted:#829ab4;--blue:#8ab6ee;--pale:#edf5ff;--line:#dce9f8}
+*{box-sizing:border-box}body{margin:0;background:var(--pale);color:var(--ink);font-family:"Microsoft YaHei",sans-serif}
+main{width:min(560px,calc(100% - 24px));margin:auto;padding:28px 0}header{text-align:center;padding:8px 8px 22px}
+.eyebrow{font-size:11px;letter-spacing:3px;color:#7d9fc9}h1{font-size:26px;margin:10px 0}
+.intro{font-size:14px;line-height:1.9;color:var(--muted)}.card{background:white;border:1px solid #e0ebfa;border-radius:22px;padding:22px 19px;box-shadow:0 12px 35px #a9c6e31c}
+.track{height:5px;background:#eaf1fa;border-radius:9px;overflow:hidden;margin-bottom:22px}.bar{height:100%;background:var(--blue);width:0}
+.meta{font-size:12px;color:#87a1c0;margin-bottom:10px}h2{font-size:20px;line-height:1.55;margin:0 0 15px}.hint{font-size:13px;line-height:1.7;color:var(--muted)}
+.options{display:grid;gap:9px}.option{display:flex;gap:10px;border:1px solid var(--line);background:#fbfdff;border-radius:13px;padding:13px;cursor:pointer;line-height:1.55;font-size:15px}
+.option.selected{border-color:#82afe8;background:#edf5ff}input[type=radio],input[type=checkbox]{accent-color:#78a9e8;margin-top:4px}
+input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:#fbfdff;padding:13px;font:inherit;color:var(--ink)}
+textarea{min-height:90px;resize:vertical}.reply{display:none;margin-top:16px;padding:13px;border-radius:13px;background:#f2f7ff;color:#617f9f;font-size:14px;line-height:1.8}.reply.show{display:block}
+.actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}button{border:0;border-radius:12px;padding:12px 17px;font:inherit;font-size:14px;cursor:pointer}
+button:disabled{opacity:.4}.secondary{background:#f0f5fb;color:#6f8aa8}.primary{background:#8ab6ee;color:white}.hidden{display:none!important}
+footer{text-align:center;font-size:12px;color:#94a9c0;margin-top:20px;line-height:1.8}.details{margin-top:16px;padding:14px;border-radius:13px;background:#f5f9ff;font-size:13px;line-height:1.9;color:#6b86a4;white-space:pre-line}
+</style></head><body><main>
+<header><div class="eyebrow">A DAY TO LOOK FORWARD TO</div><h1>和沈星回的约会备忘</h1><p class="intro">有些事情提前了解，会让见面的那天更轻松。<br>慢慢填写就好，不想回答的问题也可以跳过。</p></header>
+<section class="card" id="quiz"><div class="track"><div class="bar" id="bar"></div></div><div class="meta" id="meta"></div><h2 id="title"></h2><p class="hint" id="hint"></p><div id="area"></div><div class="reply" id="reply" aria-live="polite"></div><div class="actions"><button class="secondary" id="prev">← 上一题</button><button class="primary" id="next">下一题 →</button></div></section>
+<section class="card hidden" id="receipt"><div class="eyebrow">OUR LITTLE PLAN</div><h2>约会备忘</h2><div id="copy" style="white-space:pre-line;line-height:2"></div><div class="details" id="details"></div><p class="hint">提醒：当前版本只在页面上生成回执，不会自动保存或发送答卷。之后还需要接入答卷收集服务。</p><div class="actions"><button class="secondary" id="edit">← 回去修改</button><button class="primary" id="restart">重新填写</button></div></section>
+</main>
+<script>
+const Q=[
+{id:"name",t:"01. 见面的时候，我该怎么称呼你？",hint:"留一个你听着舒服的称呼就好。",type:"text",placeholder:"写下你喜欢的称呼",reply:"嗯，我记下了。到时候就这样叫你。"},
+{id:"activity",t:"02. 难得空出一天。你想怎么过？",hint:"选一个最想做的。",type:"radio",opts:[["a","慢慢散步，找个地方聊天","散步吗？听起来不错。走累了就找个地方坐一会儿，不用着急。"],["b","去逛街，看看喜欢的东西","逛街啊。那就慢慢看吧，看到喜欢的东西，不用急着决定。"],["c","找好吃的，从一顿饭开始","这个我赞成。你先挑想吃的，剩下的时间再慢慢安排。"],["d","去安静的地方看看风景","安静一点也好。到时候不用赶路，可以多待一会儿。"],["e","临时决定，走到哪算哪","听起来很自由。不过，至少先决定吃什么吧？"]]},
+{id:"food",t:"03. 吃饭这件事，有什么需要提前注意的吗？",hint:"可以多选；过敏或明确忌口请尽量写清楚。",type:"multi",opts:[["a","没有特别忌口","好，那选择就多一些了，到时候再一起挑。"],["b","有不吃的食物","我记一下，选餐厅时会避开。"],["c","有食物过敏","这个要认真记住。可以在补充栏写明具体食物。"],["d","想吃清淡一点","收到。吃得舒服比勉强尝试更重要。"],["e","到时候再决定","也可以，不用现在就想好。"]],extra:"其他忌口或过敏（选填）",ph:"例如：不吃香菜；对花生过敏"},
+{id:"outfit",t:"04. 关于当天的穿搭，你更喜欢哪种安排？",hint:"穿得自在最重要。",type:"radio",opts:[["a","想认真搭配，最好有情侣装的感觉","好啊。可以提前一起商量搭配，找一套我们都喜欢的。"],["c","舒服自在就好","知道了。穿得舒服最重要，不用为了搭配勉强自己。"],["d","先看看搭配参考，再一起决定","可以。我们先看看参考，再慢慢挑合适的。"]]},
+{id:"gift",t:"05. 如果准备一份小小的心意，你会喜欢什么？",hint:"不需要贵重，也不用特意准备。",type:"radio",opts:[["a","角色周边或收藏品","那就挑你真正喜欢的东西。喜欢才最重要。"],["b","实用的小物","那就选平时用得上的东西，希望它能真的帮到你。"],["c","鲜花或没有特定元素的小礼物","明白了。不需要特定主题，简单、合适就很好。"],["e","不用特意准备礼物","好，那就不把礼物当成任务。轻松见面就好。"]]},
+{id:"photo",t:"06. 如果当天想留几张合照，你觉得呢？",hint:"按你真正舒服的程度来选。",type:"radio",opts:[["a","想多拍一些，认真记录当天","好啊。我们可以慢慢拍，留下一些当天的回忆。"],["b","自然抓拍就好","明白，不用刻意摆姿势，自然一点就好。"],["c","几张纪念照就够了","好，拍几张喜欢的就够了，不用一直对着镜头。"],["d","看当天状态决定","可以，到时候再看心情，不用提前决定。"]]},
+{id:"boundaries",t:"07. 有什么事情是你不喜欢、希望我注意的？",hint:"可以多选，也可以补充。",type:"multi",opts:[["a","不喜欢太拥挤的地方","我会尽量避开拥挤的地方，慢慢走就好。"],["b","不喜欢临时改变计划","我会尽量提前商量好。如果有变化，也会先告诉你。"],["c","不习惯一直面对镜头","知道了，不会一直拿镜头对着你。"],["d","有不想聊的话题","我会注意分寸，不想聊的话就换个话题。"],["e","其他","好，可以在下面补充。"]],extra:"想特别提醒我的事（选填）",ph:"写下希望我留意的事情"},
+{id:"budget",t:"08. 关于约会当天的时间和预算",hint:"按目前的想法填写就好，暂时没决定的可以留空。",type:"budget"},
+{id:"relation",t:"09. 约会当天，你希望我们处于什么关系？",hint:"选一个最贴近你期待的答案。",type:"radio",opts:[["a","还是朋友","好，那就按照朋友相处的节奏来，不用刻意改变什么。"],["b","青涩恋爱","我会认真对待这份心意，也不急着把每一步走得很快。"],["c","甜蜜热恋","那就把这一天过得开心一些，多留些值得回想的瞬间。"],["d","已婚（设定/角色扮演）","记下了，我们就按照这个设定来安排当天的互动。"],["e","其他","明白，关系不一定非要套进某个选项里。"]]},
+{id:"touch",t:"10. 对于亲密接触，你的接受程度是？",hint:"可多选。任何时候都可以改变主意，也可以当场说不。",type:"multi",opts:[["a","牵手","好，我会先确认你的意愿，不会默认你一定接受。"],["b","拥抱、摸头等肢体接触","我记下了，具体要不要做，还是以当下双方都舒服为准。"],["c","吻手","收到。不会把它当成必须完成的安排。"],["d","亲脸","我明白了，到时候也会先尊重你的明确意愿。"],["e","尽量避免接触","好，我会保持合适的距离，你不用为此解释。"]]},
+{id:"ie",t:"11. 相处时，你更接近哪种状态？",hint:"a/b 二选一，c/d 二选一；两组各选一项。",type:"pair",groups:[{name:"你的社交电量",opts:[["a","外向","好，那我会跟上你的节奏，也给你分享想法的空间。"],["b","内向","知道了。不用一直说话，安静地待一会儿也很好。"]]},{name:"聊天节奏",opts:[["c","需要我多提出话题","收到。如果安静下来，我会主动找些轻松的话题。"],["d","不希望我说太多话","好，我会留意分寸。沉默不一定需要被填满。"]]}]},
+{id:"period",t:"12. 想提前问候一下：约会当天的生理期情况是？",hint:"完全自愿，可以跳过。",type:"radio",opts:[["a","是生理期","知道了。当天可以把节奏放轻松，按你的状态调整。"],["b","生理期已过","好，我记下了。当天还是以你的实际感受为准。"],["c","生理期快来了","收到。可以预留休息时间，行程不必太满。"]]},
+{id:"special",t:"13. 约会那天有什么特别的意义吗？",hint:"比如生日、纪念日、考试结束，或者只是一个期待已久的日子。",type:"text",placeholder:"写下特别的日子（选填）",reply:"原来那天还有这样的意义。我会把它记在备忘里。"}
+,{id:"other",t:"14. 还有什么想提前告诉我的吗？",hint:"没有也没关系，想到什么都可以写在这里。",type:"textarea",placeholder:"其他补充（选填）",reply:"嗯，我会一起记下来的。"}
+];
+let n=0;const A={};const $=id=>document.getElementById(id);
+function vals(q){let x=A[q.id];return Array.isArray(x)?x:x?[x]:[]}
+function say(s){$("reply").textContent=s?s:"";$("reply").classList.toggle("show",!!s)}
+function render(){let q=Q[n];$("meta").textContent=`QUESTION ${String(n+1).padStart(2,"0")} / ${Q.length}`;$("title").textContent=q.t;$("hint").textContent=q.hint||"";$("bar").style.width=(n/Q.length*100)+"%";$("area").innerHTML="";say("");$("prev").disabled=n===0;$("next").textContent=n===Q.length-1?"生成约会备忘 →":"下一题 →";
+if(q.type==="budget"){[{k:"date",label:"约会日期",ph:"例如：2026 年 10 月 20 日"},{k:"duration",label:"预计时长",ph:"例如：半天 / 一整天"},{k:"budget",label:"预算范围",ph:"例如：200—300 元"},{k:"schedule",label:"其他安排",ph:"例如：需要赶末班车（选填）"}].forEach(f=>{let p=document.createElement("p");p.className="hint";p.textContent=f.label;$("area").append(p);let i=document.createElement("input");i.type="text";i.placeholder=f.ph;i.value=A[f.k]||"";i.oninput=()=>A[f.k]=i.value;$("area").append(i)});}
+else if(q.type==="textarea"){let t=document.createElement("textarea");t.placeholder=q.placeholder;t.value=A[q.id]||"";t.oninput=()=>{A[q.id]=t.value;say(t.value.trim()?q.reply:"")};$("area").append(t);}
+else if(q.type==="text"){let i=document.createElement("input");i.type="text";i.placeholder=q.placeholder;i.value=A[q.id]||"";i.oninput=()=>{A[q.id]=i.value;say(i.value.trim()?q.reply:"")};$("area").append(i);if(i.value)say(q.reply)}
+else if(q.type==="pair"){q.groups.forEach((g,gi)=>{let p=document.createElement("p");p.className="hint";p.textContent=g.name;$("area").append(p);let list=document.createElement("div");list.className="options";g.opts.forEach(o=>{let l=document.createElement("label");l.className="option";let i=document.createElement("input");i.type="radio";i.name=q.id+gi;i.checked=vals(q).includes(o[0]);i.onchange=()=>{A[q.id]=vals(q).filter(v=>!q.groups[gi].opts.some(x=>x[0]===v)).concat(o[0]);list.querySelectorAll(".option").forEach(x=>x.classList.remove("selected"));l.classList.add("selected");say(o[2])};l.append(i,document.createTextNode(o[1]));if(i.checked)l.classList.add("selected");list.append(l)});$("area").append(list)})}
+else{let list=document.createElement("div");list.className="options";q.opts.forEach(o=>{let l=document.createElement("label");l.className="option";let i=document.createElement("input");i.type=q.type==="multi"?"checkbox":"radio";i.name=q.id;i.checked=vals(q).includes(o[0]);i.onchange=()=>{if(q.type==="multi"){let v=vals(q).filter(x=>x!==o[0]);if(i.checked){if(q.id==="touch"){if(o[0]==="e")v=[];else v=v.filter(x=>x!=="e")}v.push(o[0])}A[q.id]=v}else A[q.id]=o[0];list.querySelectorAll(".option").forEach(x=>x.classList.toggle("selected",x.querySelector("input").checked));say(o[2])};l.append(i,document.createTextNode(o[1]));if(i.checked)l.classList.add("selected");list.append(l)});$("area").append(list);
+if(q.extra){let p=document.createElement("p");p.className="hint";p.textContent=q.extra;$("area").append(p);let t=document.createElement("textarea");t.placeholder=q.ph;t.value=A[q.id+"_extra"]||"";t.oninput=()=>A[q.id+"_extra"]=t.value;$("area").append(t)}}
+}
+$("prev").onclick=()=>{if(n>0){n--;render()}};$("next").onclick=()=>{if(n<Q.length-1){n++;render()}else receipt()};
+function label(q,v){if(!v)return"";if(q.type==="text"||q.type==="textarea")return String(v);if(q.type==="budget")return ["date","duration","budget","schedule"].map(k=>({date:"日期",duration:"预计时长",budget:"预算范围",schedule:"其他安排"}[k])+"："+(A[k]||"未填写")).join("；");let opts=q.groups?q.groups.flatMap(g=>g.opts):q.opts;return(Array.isArray(v)?v:[v]).map(x=>opts.find(o=>o[0]===x)?.[1]).filter(Boolean).join("、")}
+function receipt(){$("quiz").classList.add("hidden");$("receipt").classList.remove("hidden");$("bar").style.width="100%";let name=(A.name||"").trim(),special=(A.special||"").trim();$("copy").textContent=`${name?name+"，":""}好，我都记下来了。\n\n这样一来，那天要做什么、要注意些什么，我就心里有数了。剩下的事情不用急着现在决定，等见面以后再慢慢商量也可以。\n\n${special?"我也会记得，那天对你来说是「"+special+"」。":"我会记得我们约好的日子。"}\n\n……现在开始，有一点期待那天了。\n\n—— 沈星回`;
+$("details").textContent=Q.filter(q=>A[q.id]||(A[q.id+"_extra"]||"").trim()||(q.id==="budget"&&["date","duration","budget","schedule"].some(k=>(A[k]||"").trim()))).map(q=>q.t+"："+label(q,A[q.id])+(A[q.id+"_extra"]?"；补充："+A[q.id+"_extra"]:"")).join("\n")||"你还没有填写具体内容，可以回去继续补充。"}
+$("edit").onclick=()=>{$("receipt").classList.add("hidden");$("quiz").classList.remove("hidden");n=Q.length-1;render()};
+$("restart").onclick=()=>{Object.keys(A).forEach(k=>delete A[k]);n=0;$("receipt").classList.add("hidden");$("quiz").classList.remove("hidden");render()};
+render();
+</script></body></html>
