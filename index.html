@@ -232,6 +232,17 @@ return(Array.isArray(v)?v:[v]).map(x=>opts.find(o=>o[0]===x)?.[1]).filter(Boolea
 function receipt(){
 $("quiz").classList.add("hidden");
 $("receipt").classList.remove("hidden");
+fetch("https://script.google.com/macros/s/AKfycbzIKb-qlhv9Q8ndYU_HFA5YlxG65IIOv-rvIKTPcMM19PI0Ycwyb7aF8ZYbnpbR8Zm4sw/exec", {
+  method: "POST",
+  mode: "no-cors",
+  headers: {
+    "Content-Type": "text/plain;charset=utf-8"
+  },
+  body: JSON.stringify({ answers: A })
+}).catch(error => {
+  console.error("问卷提交失败：", error);
+});
+
 $("bar").style.width="100%";
 let name=(A.name||"").trim(),special=(A.special||"").trim();
 $("copy").textContent=`${name?name+"，":""}好，我都记下来了。\n\n这样一来，那天要做什么、要注意些什么，我就心里有数了。剩下的事情不用急着现在决定，等见面以后再慢慢商量也可以。\n\n${special?"我也会记得，那天对你来说是「"+special+"」。":"我会记得我们约好的日子。"}\n\n……现在开始，有一点期待那天了。\n\n—— 沈星回`;
